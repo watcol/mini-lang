@@ -1,9 +1,17 @@
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Stmt {
+    Binding(String, Expr),
+    Print(Expr),
+    Define(String, Vec<String>, Expr),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expr {
     Value(i32),
     Variable(String),
     Operation(Operator, Box<Expr>, Box<Expr>),
     FuncCall(String, Vec<Expr>),
+    If(Box<Expr>, Box<Expr>, Box<Expr>),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -22,11 +30,28 @@ pub enum Operator {
 }
 
 peg::parser! { grammar parser() for str {
-    rule _ = ['\t' | ' ']*
-    rule __ = ['\n' | '\r']
+    rule _ = ("\t"/" "/"\\\n"/"\\\r")*
+    rule __ = (_ ("\n"/"\r"))*
+    rule space() = ("\t"/" "/"\\\n"/"\\\r")+
 
-    pub rule program() -> Expr
-        = e:expr() __ { e }
+    pub rule program() -> Vec<Stmt>
+        = stmt()*
+
+    rule stmt() -> Stmt
+        = print()
+        / binding()
+        / define()
+
+    rule print() -> Stmt
+        = _ "print" space() e:expr() __ { Stmt::Print(e) }
+
+    rule binding() -> Stmt
+        = _ "let" space() v:ident() _ "=" _ e:expr() __ { Stmt::Binding(v, e) }
+
+    rule define() -> Stmt
+        = _ "def" space() n:ident() _
+          "(" a:((_ a:ident() _ { a }) ** (",")) ","? _ ")" _
+          "=" _ e:expr() __ { Stmt::Define(n, a, e) }
 
     rule expr() -> Expr = eq()
 
@@ -93,12 +118,18 @@ peg::parser! { grammar parser() for str {
         = n:number() { Expr::Value(n) }
         / "(" _ e:expr() _ ")" { e }
         / funccall()
+        / if_expr()
         / v:ident() { Expr::Variable(v) }
 
     rule funccall() -> Expr
         = n:ident() _ "(" e:((_ e:expr() _ { e }) ** (",")) ","? _ ")" {
             Expr::FuncCall(n, e)
         }
+
+    rule if_expr() -> Expr
+        = "if" space() c:expr() space()
+          "then" space() t:expr() space()
+          "else" space() f:expr() { Expr::If(Box::new(c), Box::new(t), Box::new(f)) }
 
     rule ident() -> String
         = s:$(['a'..='z' | '_']*) { String::from(s) }
@@ -112,6 +143,6 @@ peg::parser! { grammar parser() for str {
 
 }}
 
-pub fn parse<S: AsRef<str>>(input: S) -> anyhow::Result<Expr> {
+pub fn parse<S: AsRef<str>>(input: S) -> anyhow::Result<Vec<Stmt>> {
     Ok(parser::program(input.as_ref())?)
 }
