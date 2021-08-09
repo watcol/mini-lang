@@ -1,18 +1,28 @@
-mod parser;
 mod ast;
+mod parser;
 
-use std::env::args;
 use std::fs::File;
 use std::io::{stdin, Read};
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(author, about)]
+struct Opt {
+    #[structopt(short, long, help = "Enables lazy evaluation.")]
+    lazy: bool,
+
+    #[structopt(name = "FILE", help = "The input file.")]
+    path: Option<String>,
+}
 
 fn main() -> anyhow::Result<()> {
-    let path = args().nth(1);
+    let opt = Opt::from_args();
     let mut buf = String::new();
-    match path {
+    match opt.path {
         Some(path) => File::open(path)?.read_to_string(&mut buf)?,
         None => stdin().read_to_string(&mut buf)?,
     };
 
-    println!("{:?}", parser::parse(&buf)?);
+    let ast = parser::parse(&buf)?;
     Ok(())
 }

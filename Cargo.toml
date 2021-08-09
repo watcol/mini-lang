@@ -15,5 +15,6 @@ include = [
 ]
 
 [dependencies]
+structopt = "0.3"
 anyhow = "1.0"
 peg = "0.7"
