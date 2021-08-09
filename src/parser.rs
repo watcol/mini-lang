@@ -1,6 +1,7 @@
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expr {
     Value(i32),
+    Variable(String),
     Operation(Operator, Box<Expr>, Box<Expr>),
     FuncCall(String, Vec<Expr>),
 }
@@ -92,9 +93,12 @@ peg::parser! { grammar parser() for str {
         = n:number() { Expr::Value(n) }
         / "(" _ e:expr() _ ")" { e }
         / funccall()
+        / v:ident() { Expr::Variable(v) }
 
     rule funccall() -> Expr
-        = n:ident() _ "(" e:(expr() ** ",") _ ","? _ ")" { Expr::FuncCall(n, e) }
+        = n:ident() _ "(" e:((_ e:expr() _ { e }) ** (",")) ","? _ ")" {
+            Expr::FuncCall(n, e)
+        }
 
     rule ident() -> String
         = s:$(['a'..='z' | '_']*) { String::from(s) }
