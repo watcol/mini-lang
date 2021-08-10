@@ -10,7 +10,8 @@ use namespace::NameSpace;
 use operation::operation;
 
 use crate::ir::Program;
+use crate::Printer;
 
 pub trait Evaluator {
-    fn evaluate(&self, ir: Program) -> anyhow::Result<()>;
+    fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> anyhow::Result<()>;
 }

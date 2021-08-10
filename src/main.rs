@@ -1,4 +1,4 @@
-use mini_lang::{EagerEval, LazyEval, execute};
+use mini_lang::{StdPrinter, EagerEval, LazyEval, execute};
 use structopt::StructOpt;
 use std::fs::File;
 use std::io::{stdin, Read};
@@ -22,9 +22,9 @@ fn main() -> anyhow::Result<()> {
     };
 
     if opt.lazy {
-        execute(&buf, LazyEval)?;
+        execute(&buf, &LazyEval, &mut StdPrinter)?;
     } else {
-        execute(&buf, EagerEval)?;
+        execute(&buf, &EagerEval, &mut StdPrinter)?;
     }
     Ok(())
 }

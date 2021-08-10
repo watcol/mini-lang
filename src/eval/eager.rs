@@ -1,11 +1,12 @@
 use crate::ir::{Expr, Program};
+use crate::Printer;
 use super::{Evaluator, NameSpace, operation};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct EagerEval;
 
 impl Evaluator for EagerEval {
-fn evaluate(&self, ir: Program) -> anyhow::Result<()> {
+fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> anyhow::Result<()> {
     let Program {
         funcs,
         vars,
@@ -19,7 +20,7 @@ fn evaluate(&self, ir: Program) -> anyhow::Result<()> {
     }
 
     for print in prints {
-        println!("{}", eval_expr(print, &mut ns, &funcs)?);
+        printer.print(eval_expr(print, &mut ns, &funcs)?)?;
     }
     Ok(())
 }
