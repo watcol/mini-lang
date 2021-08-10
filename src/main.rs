@@ -1,11 +1,7 @@
-mod eval;
-mod ir;
-mod parser;
-
+use mini_lang::{EagerEval, LazyEval, execute};
+use structopt::StructOpt;
 use std::fs::File;
 use std::io::{stdin, Read};
-use structopt::StructOpt;
-use eval::{Evaluator, EagerEval, LazyEval};
 
 #[derive(Debug, StructOpt)]
 #[structopt(author, about)]
@@ -25,12 +21,10 @@ fn main() -> anyhow::Result<()> {
         None => stdin().read_to_string(&mut buf)?,
     };
 
-    let ast = parser::parse(&buf)?;
-    let ir = ir::compile(ast)?;
     if opt.lazy {
-        LazyEval::evaluate(ir)?;
+        execute(&buf, LazyEval)?;
     } else {
-        EagerEval::evaluate(ir)?;
+        execute(&buf, EagerEval)?;
     }
     Ok(())
 }

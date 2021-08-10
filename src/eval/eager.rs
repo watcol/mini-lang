@@ -5,7 +5,7 @@ use super::{Evaluator, NameSpace, operation};
 pub struct EagerEval;
 
 impl Evaluator for EagerEval {
-fn evaluate(ir: Program) -> anyhow::Result<()> {
+fn evaluate(&self, ir: Program) -> anyhow::Result<()> {
     let Program {
         funcs,
         vars,

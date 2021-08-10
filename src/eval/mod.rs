@@ -12,5 +12,5 @@ use operation::operation;
 use crate::ir::Program;
 
 pub trait Evaluator {
-    fn evaluate(ir: Program) -> anyhow::Result<()>;
+    fn evaluate(&self, ir: Program) -> anyhow::Result<()>;
 }

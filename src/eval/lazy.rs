@@ -20,7 +20,7 @@ impl Var {
 pub struct LazyEval;
 
 impl Evaluator for LazyEval {
-fn evaluate(ir: Program) -> anyhow::Result<()> {
+fn evaluate(&self, ir: Program) -> anyhow::Result<()> {
     let Program {
         funcs,
         vars,

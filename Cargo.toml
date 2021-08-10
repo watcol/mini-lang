@@ -14,7 +14,16 @@ include = [
   "src/**/*.rs",
 ]
 
+[features]
+default = []
+bin = ["structopt"]
+
 [dependencies]
-structopt = "0.3"
+structopt = { version = "0.3", optional = true }
 anyhow = "1.0"
 peg = "0.7"
+
+[[bin]]
+name = "mini"
+path = "src/main.rs"
+required-features = ["bin"]
