@@ -9,18 +9,40 @@ pub struct Func {
 }
 
 impl Func {
-    fn call<A: IntoIterator<Item = i32>>(
+    fn call<A: AsRef<[Expr]>>(
         &self,
         args: A,
         funcs: &HashMap<String, Self>,
     ) -> anyhow::Result<i32> {
-        let vars: HashMap<_, _> = self
-            .args
-            .clone()
-            .into_iter()
-            .zip(args.into_iter())
-            .collect();
-        eval_expr(&self.expr, &vars, funcs)
+        let mut vars = HashMap::new();
+        for (i, arg) in args.as_ref().iter().enumerate() {
+            vars.insert(self.args[i].to_owned(), Var::Thunk(arg.clone()));
+        }
+        eval_expr(&self.expr, &mut vars, funcs)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Var {
+    // depth
+    Thunk(Expr),
+    Cached(i32),
+}
+
+impl Var {
+    fn get(
+        &mut self,
+        vars: &mut HashMap<String, Var>,
+        funcs: &HashMap<String, Func>,
+    ) -> anyhow::Result<i32> {
+        Ok(match self {
+            Var::Thunk(e) => {
+                let val = eval_expr(e, vars, funcs)?;
+                *self = Var::Cached(val);
+                val
+            }
+            Var::Cached(v) => *v,
+        })
     }
 }
 
@@ -30,10 +52,10 @@ pub fn evaluate(ast: Vec<Stmt>) -> anyhow::Result<()> {
     for stmt in ast {
         match stmt {
             Stmt::Binding(v, e) => {
-                vars.insert(v, eval_expr(&e, &vars, &funcs)?);
+                vars.insert(v, Var::Thunk(e));
             }
             Stmt::Print(e) => {
-                println!("{}", eval_expr(&e, &vars, &funcs)?);
+                println!("{}", eval_expr(&e, &mut vars, &funcs)?);
             }
             Stmt::Define(f, a, e) => {
                 funcs.insert(f, Func { args: a, expr: e });
@@ -45,23 +67,26 @@ pub fn evaluate(ast: Vec<Stmt>) -> anyhow::Result<()> {
 
 fn eval_expr(
     expr: &Expr,
-    vars: &HashMap<String, i32>,
+    vars: &mut HashMap<String, Var>,
     funcs: &HashMap<String, Func>,
 ) -> anyhow::Result<i32> {
     Ok(match expr {
         Expr::Value(v) => *v,
-        Expr::Variable(v) => *vars.get(v).context("Use of undefined variable.")?,
+        Expr::Variable(v) => {
+            let mut var = vars.get(v).context("Use of undefined variable.")?.clone();
+            let res = var.get(vars, funcs)?;
+            vars.insert(v.to_owned(), var);
+            res
+        }
         Expr::Operation(op, lhs, rhs) => operation(
             *op,
             eval_expr(lhs, vars, funcs)?,
             eval_expr(rhs, vars, funcs)?,
         )?,
-        Expr::FuncCall(f, a) => funcs.get(f).context("Use of undefined function.")?.call(
-            a.iter()
-                .map(|e| eval_expr(e, vars, funcs))
-                .collect::<Result<Vec<_>, _>>()?,
-            funcs,
-        )?,
+        Expr::FuncCall(f, a) => funcs
+            .get(f)
+            .context("Use of undefined function.")?
+            .call(a, funcs)?,
         Expr::If(c, t, f) => {
             if eval_expr(c, vars, funcs)? != 0 {
                 eval_expr(t, vars, funcs)?

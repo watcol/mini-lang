@@ -1,4 +1,4 @@
-use crate::ast::{Stmt, Expr, Operator};
+use crate::ast::{Expr, Operator, Stmt};
 
 peg::parser! { grammar parser() for str {
     rule _ = ("\t"/" "/"\\\n"/"\\\r")*

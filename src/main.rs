@@ -1,5 +1,6 @@
 mod ast;
 mod eval;
+mod lazy_eval;
 mod parser;
 
 use std::fs::File;
@@ -25,6 +26,10 @@ fn main() -> anyhow::Result<()> {
     };
 
     let ast = parser::parse(&buf)?;
-    eval::evaluate(ast)?;
+    if opt.lazy {
+        lazy_eval::evaluate(ast)?;
+    } else {
+        eval::evaluate(ast)?;
+    }
     Ok(())
 }
