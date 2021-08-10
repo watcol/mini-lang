@@ -1,8 +1,8 @@
-use crate::ast;
+use crate::parser;
 use anyhow::Context;
 use std::collections::HashMap;
 
-pub use ast::Operator;
+pub use parser::Operator;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Program {
@@ -22,21 +22,21 @@ pub enum Expr {
 
 impl Expr {
     fn from_ast(
-        e: ast::Expr,
+        e: parser::Expr,
         ns_vars: &HashMap<String, usize>,
         ns_funcs: &HashMap<String, (usize, usize)>,
     ) -> anyhow::Result<Self> {
         Ok(match e {
-            ast::Expr::Value(v) => Self::Value(v),
-            ast::Expr::Variable(s) => {
+            parser::Expr::Value(v) => Self::Value(v),
+            parser::Expr::Variable(s) => {
                 Self::Variable(0, *ns_vars.get(&s).context("Using undefined variable.")?)
             }
-            ast::Expr::Operation(op, lhs, rhs) => Self::Operation(
+            parser::Expr::Operation(op, lhs, rhs) => Self::Operation(
                 op,
                 Box::new(Self::from_ast(*lhs, ns_vars, ns_funcs)?),
                 Box::new(Self::from_ast(*rhs, ns_vars, ns_funcs)?),
             ),
-            ast::Expr::FuncCall(s, e) => {
+            parser::Expr::FuncCall(s, e) => {
                 let (id, args) = *ns_funcs.get(&s).context("Using undefined function.")?;
                 if e.len() != args {
                     anyhow::bail!("Illegal arguments.");
@@ -48,7 +48,7 @@ impl Expr {
                         .collect::<Result<Vec<_>, _>>()?,
                 )
             }
-            ast::Expr::If(c, t, f) => Self::If(
+            parser::Expr::If(c, t, f) => Self::If(
                 Box::new(Self::from_ast(*c, ns_vars, ns_funcs)?),
                 Box::new(Self::from_ast(*t, ns_vars, ns_funcs)?),
                 Box::new(Self::from_ast(*f, ns_vars, ns_funcs)?),
@@ -77,7 +77,7 @@ impl Expr {
     }
 }
 
-pub fn compile(ast: Vec<ast::Stmt>) -> anyhow::Result<Program> {
+pub fn compile(ast: parser::Ast) -> anyhow::Result<Program> {
     let mut vars = Vec::new();
     let mut ns_vars = HashMap::new();
     let mut funcs = Vec::new();
@@ -85,15 +85,15 @@ pub fn compile(ast: Vec<ast::Stmt>) -> anyhow::Result<Program> {
     let mut prints = Vec::new();
     for stmt in ast {
         match stmt {
-            ast::Stmt::Binding(v, e) => {
+            parser::Stmt::Binding(v, e) => {
                 let id = vars.len();
                 vars.push(Expr::from_ast(e, &ns_vars, &ns_funcs)?);
                 ns_vars.insert(v, id);
             }
-            ast::Stmt::Print(e) => {
+            parser::Stmt::Print(e) => {
                 prints.push(Expr::from_ast(e, &ns_vars, &ns_funcs)?);
             }
-            ast::Stmt::Define(f, a, e) => {
+            parser::Stmt::Define(f, a, e) => {
                 let id = vars.len();
                 let args = a.len();
                 ns_funcs.insert(f, (id, args));

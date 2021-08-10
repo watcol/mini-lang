@@ -1,11 +1,46 @@
-use crate::ast::{Expr, Operator, Stmt};
+pub type Ast = Vec<Stmt>;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Stmt {
+    Binding(String, Expr),
+    Print(Expr),
+    Define(String, Vec<String>, Expr),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Expr {
+    Value(i32),
+    Variable(String),
+    Operation(Operator, Box<Expr>, Box<Expr>),
+    FuncCall(String, Vec<Expr>),
+    If(Box<Expr>, Box<Expr>, Box<Expr>),
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Operator {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Rem,
+    Gt,
+    Ge,
+    Lt,
+    Le,
+    Eq,
+    Neq,
+}
+
+pub fn parse<S: AsRef<str>>(input: S) -> anyhow::Result<Ast> {
+    Ok(parser::program(input.as_ref())?)
+}
 
 peg::parser! { grammar parser() for str {
     rule _ = ("\t"/" "/"\\\n"/"\\\r")*
     rule __ = (_ ("\n"/"\r"))*
     rule space() = ("\t"/" "/"\\\n"/"\\\r")+
 
-    pub rule program() -> Vec<Stmt>
+    pub rule program() -> Ast
         = stmt()*
 
     rule stmt() -> Stmt
@@ -113,7 +148,3 @@ peg::parser! { grammar parser() for str {
         = n:$(['0'..='9']+) {? n.parse().or(Err("Integer Parsing Error"))}
 
 }}
-
-pub fn parse<S: AsRef<str>>(input: S) -> anyhow::Result<Vec<Stmt>> {
-    Ok(parser::program(input.as_ref())?)
-}

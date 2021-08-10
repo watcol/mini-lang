@@ -1,4 +1,3 @@
-mod ast;
 mod eval;
 mod ir;
 mod parser;
