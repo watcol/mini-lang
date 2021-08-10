@@ -1,14 +1,18 @@
 use crate::ir::{Expr, Program};
-use crate::utils::{operation, DataBase};
+use super::{Evaluator, NameSpace, operation};
 
-pub fn evaluate(ir: Program) -> anyhow::Result<()> {
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct EagerEval;
+
+impl Evaluator for EagerEval {
+fn evaluate(ir: Program) -> anyhow::Result<()> {
     let Program {
         funcs,
         vars,
         prints,
     } = ir;
 
-    let mut ns = DataBase::new();
+    let mut ns = NameSpace::new();
     for var in vars {
         let val = eval_expr(var, &mut ns, &funcs)?;
         ns.register(val);
@@ -19,11 +23,12 @@ pub fn evaluate(ir: Program) -> anyhow::Result<()> {
     }
     Ok(())
 }
+}
 
 fn funccall(
     func: Expr,
     args: Vec<Expr>,
-    ns: &mut DataBase<i32>,
+    ns: &mut NameSpace<i32>,
     funcs: &[Expr],
 ) -> anyhow::Result<i32> {
     let depth = ns.chunk();
@@ -36,7 +41,7 @@ fn funccall(
     Ok(res)
 }
 
-fn eval_expr(expr: Expr, ns: &mut DataBase<i32>, funcs: &[Expr]) -> anyhow::Result<i32> {
+fn eval_expr(expr: Expr, ns: &mut NameSpace<i32>, funcs: &[Expr]) -> anyhow::Result<i32> {
     Ok(match expr {
         Expr::Value(v) => v,
         Expr::Variable(depth, id) => *ns.get(depth, id)?,

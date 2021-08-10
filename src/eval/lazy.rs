@@ -1,5 +1,5 @@
 use crate::ir::{Expr, Program};
-use crate::utils::{operation, DataBase};
+use super::{Evaluator, operation, NameSpace};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Var {
@@ -8,7 +8,7 @@ enum Var {
 }
 
 impl Var {
-    fn get(self, ns: &mut DataBase<Self>, funcs: &[Expr]) -> anyhow::Result<i32> {
+    fn get(self, ns: &mut NameSpace<Self>, funcs: &[Expr]) -> anyhow::Result<i32> {
         Ok(match self {
             Self::Thunk(e) => eval_expr(e, ns, funcs)?,
             Self::Cached(i) => i,
@@ -16,14 +16,18 @@ impl Var {
     }
 }
 
-pub fn evaluate(ir: Program) -> anyhow::Result<()> {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LazyEval;
+
+impl Evaluator for LazyEval {
+fn evaluate(ir: Program) -> anyhow::Result<()> {
     let Program {
         funcs,
         vars,
         prints,
     } = ir;
 
-    let mut ns = DataBase::new();
+    let mut ns = NameSpace::new();
     for var in vars {
         ns.register(Var::Thunk(var));
     }
@@ -33,11 +37,12 @@ pub fn evaluate(ir: Program) -> anyhow::Result<()> {
     }
     Ok(())
 }
+}
 
 fn funccall(
     func: Expr,
     args: Vec<Expr>,
-    ns: &mut DataBase<Var>,
+    ns: &mut NameSpace<Var>,
     funcs: &[Expr],
 ) -> anyhow::Result<i32> {
     let depth = ns.chunk();
@@ -49,7 +54,7 @@ fn funccall(
     Ok(res)
 }
 
-fn eval_expr(expr: Expr, ns: &mut DataBase<Var>, funcs: &[Expr]) -> anyhow::Result<i32> {
+fn eval_expr(expr: Expr, ns: &mut NameSpace<Var>, funcs: &[Expr]) -> anyhow::Result<i32> {
     Ok(match expr {
         Expr::Value(v) => v,
         Expr::Variable(depth, id) => {

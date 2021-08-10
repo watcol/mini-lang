@@ -1,13 +1,12 @@
 mod ast;
 mod eval;
 mod ir;
-mod lazy_eval;
 mod parser;
-mod utils;
 
 use std::fs::File;
 use std::io::{stdin, Read};
 use structopt::StructOpt;
+use eval::{Evaluator, EagerEval, LazyEval};
 
 #[derive(Debug, StructOpt)]
 #[structopt(author, about)]
@@ -30,9 +29,9 @@ fn main() -> anyhow::Result<()> {
     let ast = parser::parse(&buf)?;
     let ir = ir::compile(ast)?;
     if opt.lazy {
-        lazy_eval::evaluate(ir)?;
+        LazyEval::evaluate(ir)?;
     } else {
-        eval::evaluate(ir)?;
+        EagerEval::evaluate(ir)?;
     }
     Ok(())
 }
