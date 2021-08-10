@@ -1,5 +1,4 @@
-use crate::parser;
-use anyhow::Context;
+use crate::{parser, MiniResult, MiniError};
 use std::collections::HashMap;
 
 pub use parser::Operator;
@@ -25,11 +24,11 @@ impl Expr {
         e: parser::Expr,
         ns_vars: &HashMap<String, usize>,
         ns_funcs: &HashMap<String, (usize, usize)>,
-    ) -> anyhow::Result<Self> {
+    ) -> MiniResult<Self> {
         Ok(match e {
             parser::Expr::Value(v) => Self::Value(v),
             parser::Expr::Variable(s) => {
-                Self::Variable(0, *ns_vars.get(&s).context("Using undefined variable.")?)
+                Self::Variable(0, *ns_vars.get(&s).ok_or("Using undefined variable.")?)
             }
             parser::Expr::Operation(op, lhs, rhs) => Self::Operation(
                 op,
@@ -37,9 +36,9 @@ impl Expr {
                 Box::new(Self::from_ast(*rhs, ns_vars, ns_funcs)?),
             ),
             parser::Expr::FuncCall(s, e) => {
-                let (id, args) = *ns_funcs.get(&s).context("Using undefined function.")?;
+                let (id, args) = *ns_funcs.get(&s).ok_or("Using undefined function.")?;
                 if e.len() != args {
-                    anyhow::bail!("Illegal arguments.");
+                    return Err(MiniError::from("Illegal arguments."));
                 }
                 Self::FuncCall(
                     id,
@@ -77,7 +76,7 @@ impl Expr {
     }
 }
 
-pub fn compile(ast: parser::Ast) -> anyhow::Result<Program> {
+pub fn compile(ast: parser::Ast) -> MiniResult<Program> {
     let mut vars = Vec::new();
     let mut ns_vars = HashMap::new();
     let mut funcs = Vec::new();

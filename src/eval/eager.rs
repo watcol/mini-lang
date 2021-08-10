@@ -1,12 +1,13 @@
 use crate::ir::{Expr, Program};
-use crate::Printer;
+use crate::{Printer, MiniResult, MiniError};
 use super::{Evaluator, NameSpace, operation};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct EagerEval;
 
 impl Evaluator for EagerEval {
-fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> anyhow::Result<()> {
+    type Err = MiniError;
+fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> Result<(), Self::Err> {
     let Program {
         funcs,
         vars,
@@ -20,7 +21,7 @@ fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> anyhow::Result<(
     }
 
     for print in prints {
-        printer.print(eval_expr(print, &mut ns, &funcs)?)?;
+        printer.print(eval_expr(print, &mut ns, &funcs)?).map_err(MiniError::from_error)?;
     }
     Ok(())
 }
@@ -31,7 +32,7 @@ fn funccall(
     args: Vec<Expr>,
     ns: &mut NameSpace<i32>,
     funcs: &[Expr],
-) -> anyhow::Result<i32> {
+) -> MiniResult<i32> {
     let depth = ns.chunk();
     for arg in args {
         let val = eval_expr(arg, ns, funcs)?;
@@ -42,7 +43,7 @@ fn funccall(
     Ok(res)
 }
 
-fn eval_expr(expr: Expr, ns: &mut NameSpace<i32>, funcs: &[Expr]) -> anyhow::Result<i32> {
+fn eval_expr(expr: Expr, ns: &mut NameSpace<i32>, funcs: &[Expr]) -> MiniResult<i32> {
     Ok(match expr {
         Expr::Value(v) => v,
         Expr::Variable(depth, id) => *ns.get(depth, id)?,

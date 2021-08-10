@@ -19,8 +19,8 @@ default = []
 bin = ["structopt"]
 
 [dependencies]
+thiserror = "1.0"
 structopt = { version = "0.3", optional = true }
-anyhow = "1.0"
 peg = "0.7"
 
 [[bin]]

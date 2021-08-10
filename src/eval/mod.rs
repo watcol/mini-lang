@@ -13,5 +13,6 @@ use crate::ir::Program;
 use crate::Printer;
 
 pub trait Evaluator {
-    fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> anyhow::Result<()>;
+    type Err: std::error::Error + 'static;
+    fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> Result<(), Self::Err>;
 }

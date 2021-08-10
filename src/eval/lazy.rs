@@ -1,5 +1,5 @@
 use crate::ir::{Expr, Program};
-use crate::Printer;
+use crate::{Printer, MiniError, MiniResult};
 use super::{Evaluator, operation, NameSpace};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -9,7 +9,7 @@ enum Var {
 }
 
 impl Var {
-    fn get(self, ns: &mut NameSpace<Self>, funcs: &[Expr]) -> anyhow::Result<i32> {
+    fn get(self, ns: &mut NameSpace<Self>, funcs: &[Expr]) -> MiniResult<i32> {
         Ok(match self {
             Self::Thunk(e) => eval_expr(e, ns, funcs)?,
             Self::Cached(i) => i,
@@ -21,7 +21,8 @@ impl Var {
 pub struct LazyEval;
 
 impl Evaluator for LazyEval {
-fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> anyhow::Result<()> {
+    type Err = MiniError;
+fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> MiniResult<()> {
     let Program {
         funcs,
         vars,
@@ -34,7 +35,7 @@ fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> anyhow::Result<(
     }
 
     for print in prints {
-        printer.print(eval_expr(print, &mut ns, &funcs)?)?;
+        printer.print(eval_expr(print, &mut ns, &funcs)?).map_err(MiniError::from_error)?;
     }
     Ok(())
 }
@@ -45,7 +46,7 @@ fn funccall(
     args: Vec<Expr>,
     ns: &mut NameSpace<Var>,
     funcs: &[Expr],
-) -> anyhow::Result<i32> {
+) -> MiniResult<i32> {
     let depth = ns.chunk();
     for arg in args {
         ns.register(Var::Thunk(arg));
@@ -55,7 +56,7 @@ fn funccall(
     Ok(res)
 }
 
-fn eval_expr(expr: Expr, ns: &mut NameSpace<Var>, funcs: &[Expr]) -> anyhow::Result<i32> {
+fn eval_expr(expr: Expr, ns: &mut NameSpace<Var>, funcs: &[Expr]) -> MiniResult<i32> {
     Ok(match expr {
         Expr::Value(v) => v,
         Expr::Variable(depth, id) => {

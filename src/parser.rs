@@ -1,3 +1,5 @@
+use crate::{MiniResult, MiniError};
+
 pub type Ast = Vec<Stmt>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -31,8 +33,8 @@ pub enum Operator {
     Neq,
 }
 
-pub fn parse<S: AsRef<str>>(input: S) -> anyhow::Result<Ast> {
-    Ok(parser::program(input.as_ref())?)
+pub fn parse<S: AsRef<str>>(input: S) -> MiniResult<Ast> {
+    parser::program(input.as_ref()).map_err(MiniError::Parse)
 }
 
 peg::parser! { grammar parser() for str {

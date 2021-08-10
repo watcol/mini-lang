@@ -1,4 +1,4 @@
-use mini_lang::{StdPrinter, EagerEval, LazyEval, execute};
+use mini_lang::{StdPrinter, EagerEval, LazyEval, execute, MiniError, MiniResult};
 use structopt::StructOpt;
 use std::fs::File;
 use std::io::{stdin, Read};
@@ -13,12 +13,19 @@ struct Opt {
     path: Option<String>,
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() {
+    inner_main().unwrap_or_else(|e| {
+        println!("{}", e);
+        std::process::exit(1);
+    })
+}
+
+fn inner_main() -> MiniResult<()> {
     let opt = Opt::from_args();
     let mut buf = String::new();
     match opt.path {
-        Some(path) => File::open(path)?.read_to_string(&mut buf)?,
-        None => stdin().read_to_string(&mut buf)?,
+        Some(path) => File::open(path).map_err(MiniError::from_error)?.read_to_string(&mut buf).map_err(MiniError::from_error)?,
+        None => stdin().read_to_string(&mut buf).map_err(MiniError::from_error)?,
     };
 
     if opt.lazy {
