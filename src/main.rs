@@ -1,7 +1,9 @@
 mod ast;
-mod eval;
-mod lazy_eval;
+// mod eval;
+mod ir;
+// mod lazy_eval;
 mod parser;
+// mod utils;
 
 use std::fs::File;
 use std::io::{stdin, Read};
@@ -26,10 +28,12 @@ fn main() -> anyhow::Result<()> {
     };
 
     let ast = parser::parse(&buf)?;
-    if opt.lazy {
-        lazy_eval::evaluate(ast)?;
-    } else {
-        eval::evaluate(ast)?;
-    }
+    let ir = ir::compile(ast)?;
+    println!("{:?}", ir);
+    // if opt.lazy {
+    //     lazy_eval::evaluate(ast)?;
+    // } else {
+    //     eval::evaluate(ast)?;
+    // }
     Ok(())
 }
