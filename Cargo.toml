@@ -16,6 +16,14 @@ include = [
   "src/**/*.rs",
 ]
 
+[dev-dependencies]
+criterion = "0.3"
+indoc = "1.0"
+
+[[bench]]
+name = "tarai"
+harness = false
+
 [features]
 default = []
 bin = ["structopt"]
