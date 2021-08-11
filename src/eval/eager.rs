@@ -2,6 +2,7 @@ use crate::ir::{Expr, Program};
 use crate::{Printer, MiniResult, MiniError};
 use super::{Evaluator, NameSpace, operation};
 
+/// The eager evaluator
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct EagerEval;
 

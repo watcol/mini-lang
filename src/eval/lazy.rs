@@ -17,6 +17,7 @@ impl Var {
     }
 }
 
+/// The lazy evaluator
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LazyEval;
 

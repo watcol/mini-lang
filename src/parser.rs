@@ -18,18 +18,30 @@ pub enum Expr {
     If(Box<Expr>, Box<Expr>, Box<Expr>),
 }
 
+/// The operator enum for expressions.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Operator {
+    /// `+`
     Add,
+    /// `-`
     Sub,
+    /// `*`
     Mul,
+    /// `/`
     Div,
+    /// `%`
     Rem,
+    /// `>`
     Gt,
+    /// `>=`, or `=>`
     Ge,
+    /// `<`
     Lt,
+    /// `<=`, or `=<`
     Le,
+    /// `==`
     Eq,
+    /// `!=`
     Neq,
 }
 

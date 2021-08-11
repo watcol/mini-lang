@@ -1,10 +1,14 @@
 use std::fmt;
 
+/// The printer to print evaluated value.
 pub trait Printer {
+    /// The error type that printer will provide.
     type Err: std::error::Error + 'static;
+    /// Print integer value.
     fn print(&mut self, v: i32) -> Result<(), Self::Err>;
 }
 
+/// The default printer implementation which prints to stdout.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct StdPrinter;
 

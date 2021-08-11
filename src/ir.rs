@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 pub use parser::Operator;
 
+/// List of define functions, variables, and expressions to print.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Program {
     pub funcs: Vec<Expr>,
@@ -10,12 +11,18 @@ pub struct Program {
     pub prints: Vec<Expr>,
 }
 
+/// The expression tree.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expr {
+    /// The literal value.
     Value(i32),
+    /// The variable's scope depth (specified by `expr.circulate`), and index (in `program.vars`).
     Variable(usize, usize),
+    /// The operator, and left side value, and right side value.
     Operation(Operator, Box<Expr>, Box<Expr>),
+    /// The function index (in `program.funcs`) and list of arguments (number integrity is already verified.)
     FuncCall(usize, Vec<Expr>),
+    /// The condition, the expression evaluated if condition is true, and false.
     If(Box<Expr>, Box<Expr>, Box<Expr>),
 }
 
@@ -55,6 +62,7 @@ impl Expr {
         })
     }
 
+    /// Circulate the variable's scope depth recursively.
     pub fn circulate(self, depth: usize) -> Self {
         match self {
             Self::Value(v) => Self::Value(v),

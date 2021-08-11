@@ -1,7 +1,9 @@
 use peg::{error::ParseError, str::LineCol};
 
+/// The result type for this crate.
 pub type MiniResult<T> = Result<T, MiniError>;
 
+/// The error type for this crate.
 #[derive(thiserror::Error, Debug)]
 pub enum MiniError {
     #[error("Parse Error: {0}")]
@@ -13,6 +15,7 @@ pub enum MiniError {
 }
 
 impl MiniError {
+    /// Put any kinds of error into `MiniError`.
     pub fn from_error<E: std::error::Error + 'static>(error: E) -> Self {
         Self::Any(Box::new(error))
     }
