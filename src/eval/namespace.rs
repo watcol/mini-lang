@@ -1,4 +1,4 @@
-use crate::{MiniResult, MiniError};
+use crate::{MiniError, MiniResult};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NameSpace<T>(Vec<Option<T>>, Vec<usize>);
@@ -11,7 +11,11 @@ impl<T> NameSpace<T> {
     fn get_pos(&self, depth: usize, id: usize) -> MiniResult<usize> {
         let offset = self.1.get(depth).copied().ok_or("Use of undefined depth")?;
         let pos = offset + id;
-        let next_offset = self.1.get(depth + 1).copied().unwrap_or_else(|| self.0.len());
+        let next_offset = self
+            .1
+            .get(depth + 1)
+            .copied()
+            .unwrap_or_else(|| self.0.len());
         if pos >= next_offset {
             return Err(MiniError::from("Illegal id"));
         }
@@ -41,9 +45,7 @@ impl<T> NameSpace<T> {
 
     pub fn get(&self, depth: usize, id: usize) -> MiniResult<&T> {
         let pos = self.get_pos(depth, id)?;
-        Ok(self.0[pos]
-            .as_ref()
-            .ok_or("The value is borrowed.")?)
+        Ok(self.0[pos].as_ref().ok_or("The value is borrowed.")?)
     }
 
     pub fn borrow(&mut self, depth: usize, id: usize) -> MiniResult<T> {

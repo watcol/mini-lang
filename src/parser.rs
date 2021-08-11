@@ -1,4 +1,4 @@
-use crate::{MiniResult, MiniError};
+use crate::{MiniError, MiniResult};
 
 pub type Ast = Vec<Stmt>;
 

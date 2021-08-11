@@ -1,4 +1,4 @@
-use crate::{parser, MiniResult, MiniError};
+use crate::{parser, MiniError, MiniResult};
 use std::collections::HashMap;
 
 pub use parser::Operator;

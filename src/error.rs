@@ -11,7 +11,7 @@ pub enum MiniError {
     #[error("Execution Error: {0}")]
     Execution(String),
     #[error("{0}")]
-    Any(Box<dyn std::error::Error>)
+    Any(Box<dyn std::error::Error>),
 }
 
 impl MiniError {

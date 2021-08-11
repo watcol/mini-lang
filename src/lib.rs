@@ -5,19 +5,23 @@
 //!
 //! For the documentation of the language itself, see
 //! [README.md](https://github.com/watcol/mini-lang/blob/main/README.md).
+mod error;
+mod eval;
 mod ir;
 mod parser;
-mod eval;
 mod printer;
-mod error;
 
+pub use error::{MiniError, MiniResult};
+pub use eval::{EagerEval, Evaluator, LazyEval};
+pub use ir::{Expr, Operator, Program};
 pub use printer::{Printer, StdPrinter};
-pub use eval::{Evaluator, EagerEval, LazyEval};
-pub use error::{MiniResult, MiniError};
-pub use ir::{Program, Expr, Operator};
 
 /// Execute the code by given evaluator and printer.
-pub fn execute<B: AsRef<str>, E: Evaluator, P: Printer>(buf: B, eval: &E, printer: &mut P) -> MiniResult<()> {
+pub fn execute<B: AsRef<str>, E: Evaluator, P: Printer>(
+    buf: B,
+    eval: &E,
+    printer: &mut P,
+) -> MiniResult<()> {
     let ast = parser::parse(buf)?;
     let ir = ir::compile(ast)?;
     eval.evaluate(ir, printer).map_err(MiniError::from_error)

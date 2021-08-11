@@ -1,6 +1,6 @@
+use super::{operation, Evaluator, NameSpace};
 use crate::ir::{Expr, Program};
-use crate::{Printer, MiniResult, MiniError};
-use super::{Evaluator, NameSpace, operation};
+use crate::{MiniError, MiniResult, Printer};
 
 /// The eager evaluator
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -8,24 +8,26 @@ pub struct EagerEval;
 
 impl Evaluator for EagerEval {
     type Err = MiniError;
-fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> Result<(), Self::Err> {
-    let Program {
-        funcs,
-        vars,
-        prints,
-    } = ir;
+    fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> Result<(), Self::Err> {
+        let Program {
+            funcs,
+            vars,
+            prints,
+        } = ir;
 
-    let mut ns = NameSpace::new();
-    for var in vars {
-        let val = eval_expr(var, &mut ns, &funcs)?;
-        ns.register(val);
-    }
+        let mut ns = NameSpace::new();
+        for var in vars {
+            let val = eval_expr(var, &mut ns, &funcs)?;
+            ns.register(val);
+        }
 
-    for print in prints {
-        printer.print(eval_expr(print, &mut ns, &funcs)?).map_err(MiniError::from_error)?;
+        for print in prints {
+            printer
+                .print(eval_expr(print, &mut ns, &funcs)?)
+                .map_err(MiniError::from_error)?;
+        }
+        Ok(())
     }
-    Ok(())
-}
 }
 
 fn funccall(

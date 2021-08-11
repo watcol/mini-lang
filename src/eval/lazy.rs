@@ -1,6 +1,6 @@
+use super::{operation, Evaluator, NameSpace};
 use crate::ir::{Expr, Program};
-use crate::{Printer, MiniError, MiniResult};
-use super::{Evaluator, operation, NameSpace};
+use crate::{MiniError, MiniResult, Printer};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Var {
@@ -23,23 +23,25 @@ pub struct LazyEval;
 
 impl Evaluator for LazyEval {
     type Err = MiniError;
-fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> MiniResult<()> {
-    let Program {
-        funcs,
-        vars,
-        prints,
-    } = ir;
+    fn evaluate<P: Printer>(&self, ir: Program, printer: &mut P) -> MiniResult<()> {
+        let Program {
+            funcs,
+            vars,
+            prints,
+        } = ir;
 
-    let mut ns = NameSpace::new();
-    for var in vars {
-        ns.register(Var::Thunk(var));
-    }
+        let mut ns = NameSpace::new();
+        for var in vars {
+            ns.register(Var::Thunk(var));
+        }
 
-    for print in prints {
-        printer.print(eval_expr(print, &mut ns, &funcs)?).map_err(MiniError::from_error)?;
+        for print in prints {
+            printer
+                .print(eval_expr(print, &mut ns, &funcs)?)
+                .map_err(MiniError::from_error)?;
+        }
+        Ok(())
     }
-    Ok(())
-}
 }
 
 fn funccall(
